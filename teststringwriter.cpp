@@ -10,7 +10,6 @@ using namespace std;
 template<typename T, typename FromString, typename ToString, typename ToCharPtr>
 T& strtransform(const std::string& ref, T& str, FromString fs, ToString ts, ToCharPtr ptr)
 {
-  cout << "transform" << endl;
   fs(str,ref);
   BOOST_CHECK(ts(str) == ref);
   auto c1 = ptr(str);
@@ -31,7 +30,7 @@ T& strtransform(const std::string& ref, T& str, FromString fs, ToString ts, ToCh
   return str;
 }
 
-BOOST_AUTO_TEST_SUITE( StringWriter )
+BOOST_AUTO_TEST_SUITE( TestStringWriter )
 
 BOOST_AUTO_TEST_CASE(testStringWriter)
 {
@@ -43,7 +42,7 @@ BOOST_AUTO_TEST_CASE(testStringWriter)
       [](const std::string& s){ return s; },
       [](std::string& s){ return StringWriter(s,0); }
       );
-  cout << s2 << endl;
+  //cout << s2 << endl;
 
   char *s3 = new char[s.size()+1];
   strtransform(s, s3,
@@ -51,10 +50,52 @@ BOOST_AUTO_TEST_CASE(testStringWriter)
       [](char *s){ return std::string(s); },
       [](char *s){ return s; }
       );
-  cout << s3 << endl;
+  //cout << s3 << endl;
 
   BOOST_CHECK(std::string(s3) == s2);
   BOOST_CHECK(s2 == s2x);
+}
+
+// examples from the README.md
+void g1(char *s)
+{
+  char *sc = s+3;
+  *sc = 'a';
+  while (char *scc = strstr(sc, "b"))
+    *scc = 'c';
+}
+
+void g2(char *s)
+{
+  auto sc = s+3;
+  *sc = 'a';
+  while (auto scc = strstr(sc, "b"))
+    *scc = 'c';
+}
+
+void g3(std::string& str)
+{
+  StringWriter s{str};
+  auto sc = s+3;
+  *sc = 'a';
+  while (auto scc = strstr(sc, "b"))
+    *scc = 'c';
+}
+BOOST_AUTO_TEST_CASE(testExamples)
+{
+  std::string s{"This is another simple text"};
+  char sg1[s.size()+1];
+  strcpy(sg1, s.c_str());
+  g1(sg1);
+  char sg2[s.size()+1];
+  strcpy(sg2, s.c_str());
+  g2(sg2);
+  std::string sg3{s};
+  g3(sg3);
+  BOOST_CHECK(sg3 != s);
+  BOOST_CHECK(sg3 == sg2);
+  BOOST_CHECK(sg3 == sg1);
+  BOOST_CHECK(!strcmp(sg1, sg2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
