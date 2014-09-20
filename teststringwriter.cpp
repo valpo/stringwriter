@@ -25,12 +25,33 @@ T& strtransform(const std::string& ref, T& str, FromString fs, ToString ts, ToCh
   while (auto c = strstr(c1, "\n")) {
     *c = '_';
   }
-  //c1x[100] = 'z'; <-- will crash with char*, will checked with StringWriter
+  //c1x[1000] = 'z'; <-- may crash with char*, will checked with StringWriter
   BOOST_CHECK(ts(str) != ref);
   return str;
 }
 
 BOOST_AUTO_TEST_SUITE( TestStringWriter )
+
+BOOST_AUTO_TEST_CASE(testStringWriterStrcpy)
+{
+  const std::string s{"This is some silly text without any meaning."};
+  std::string s1{s};
+  StringWriter sw1{s1};
+  sw1 += 17;
+  char *s2 = strdup(s.c_str());
+  char *sw2 = s2;
+  sw2 += 17;
+  BOOST_CHECK(strlen(s1) == strlen(s2));
+  BOOST_CHECK(!strcmp(s1.c_str(), s2));
+  BOOST_CHECK(!strcmp(sw1.c_str(), sw2));
+  strcpy(sw1, "hallo");
+  strcpy(sw2, "hallo");
+  BOOST_CHECK(strlen(sw1) == strlen(sw2));
+  BOOST_CHECK(!strcmp(s1.c_str(), s2));
+  sw1[5] = ' '; // replace the \0 byte
+  sw2[5] = ' ';
+  BOOST_CHECK(s1 == s2);
+}
 
 BOOST_AUTO_TEST_CASE(testStringWriter)
 {
